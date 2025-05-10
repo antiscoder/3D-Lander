@@ -1,19 +1,33 @@
-# Xcode & openFrameworks build files
+# macOS and Xcode-specific
 *.xcuserstate
 *.xcworkspace
-*.xcuserdatad
-*.xcodeproj/project.xcworkspace/
-*.xcodeproj/xcuserdata/
-*.xcodeproj/project.xcuserdatad/
+*.xcodeproj/
+*.xcuserdata/
+*.xcconfig
+*.plist
+*.entitlements
+.DS_Store
+
+# Windows-specific
+*.sln
+*.vcxproj*
+*.vcxproj.filters
+
+# Build artifacts
 bin/
 build/
 *.app
+*.exe
 *.log
+*.o
+*.obj
 *.swp
 *.swo
-.DS_Store
+
+# IDEs
 .idea/
 .vscode/
-*.mp4
-*.mov
 
+# Media
+*.mov
+*.mp4
