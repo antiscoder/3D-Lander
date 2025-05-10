@@ -1,26 +1,81 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxGui.h"
+#include  "ofxAssimpModelLoader.h"
+#include "Octree.h"
+
+
 
 class ofApp : public ofBaseApp{
 
 	public:
-		void setup() override;
-		void update() override;
-		void draw() override;
-		void exit() override;
+		void setup();
+		void update();
+		void draw();
 
-		void keyPressed(int key) override;
-		void keyReleased(int key) override;
-		void mouseMoved(int x, int y ) override;
-		void mouseDragged(int x, int y, int button) override;
-		void mousePressed(int x, int y, int button) override;
-		void mouseReleased(int x, int y, int button) override;
-		void mouseScrolled(int x, int y, float scrollX, float scrollY) override;
-		void mouseEntered(int x, int y) override;
-		void mouseExited(int x, int y) override;
-		void windowResized(int w, int h) override;
-		void dragEvent(ofDragInfo dragInfo) override;
-		void gotMessage(ofMessage msg) override;
+		void keyPressed(int key);
+		void keyReleased(int key);
+		void mouseMoved(int x, int y );
+		void mouseDragged(int x, int y, int button);
+		void mousePressed(int x, int y, int button);
+		void mouseReleased(int x, int y, int button);
+		void mouseEntered(int x, int y);
+		void mouseExited(int x, int y);
+		void windowResized(int w, int h);
+		void dragEvent2(ofDragInfo dragInfo);
+		void dragEvent(ofDragInfo dragInfo);
+		void gotMessage(ofMessage msg);
+		void drawAxis(ofVec3f);
+		void initLightingAndMaterials();
+		void savePicture();
+		void toggleWireframeMode();
+		void togglePointsDisplay();
+		void toggleSelectTerrain();
+		void setCameraTarget();
+		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
+		bool raySelectWithOctree(ofVec3f &pointRet);
+		glm::vec3 getMousePointOnPlane(glm::vec3 p , glm::vec3 n);
+
+		ofEasyCam cam;
+		ofxAssimpModelLoader mars, lander;
+		ofLight light;
+		Box boundingBox, landerBounds;
+		Box testBox;
+		vector<Box> colBoxList;
+		bool bLanderSelected = false;
+		Octree octree;
+		TreeNode selectedNode;
+		glm::vec3 mouseDownPos, mouseLastPos;
+		bool bInDrag = false;
+
+
+		ofxIntSlider numLevels;
+		ofxToggle timingInfo;
+		ofxPanel gui;
+
+		bool bAltKeyDown;
+		bool bCtrlKeyDown;
+		bool bWireframe;
+		bool bDisplayPoints;
+		bool bPointSelected;
+		bool bHide;
+		bool pointSelected = false;
+		bool bDisplayLeafNodes = false;
+		bool bDisplayOctree = false;
+		bool bDisplayBBoxes = false;
 		
+		bool bLanderLoaded;
+		bool bTerrainSelected;
+	
+		ofVec3f selectedPoint;
+		ofVec3f intersectPoint;
+
+		vector<Box> bboxList;
+
+		const float selectionRange = 4.0;
+
+		bool bResolveCollision = false;
+		glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
+		float collisionSpeed = 0.1;
 };
