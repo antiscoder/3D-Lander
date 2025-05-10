@@ -31,3 +31,6 @@ build/
 # Media
 *.mov
 *.mp4
+/.vs
+/icon.rc
+/obj/x64/Debug
