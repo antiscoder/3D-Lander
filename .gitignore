@@ -1,0 +1,19 @@
+# Xcode & openFrameworks build files
+*.xcuserstate
+*.xcworkspace
+*.xcuserdatad
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcuserdatad/
+bin/
+build/
+*.app
+*.log
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+*.mp4
+*.mov
+
