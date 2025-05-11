@@ -42,21 +42,26 @@ void ofApp::setup(){
 	//
 	gui.setup();
 	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
-	gui.add(timingInfo.setup("Timing Info", true));;
 	bHide = false;
 
 	mars.loadModel("geo/moon-houdini.obj");
 	mars.setScaleNormalization(false);
+    
+    stars.reserve(200);
+      for(int i = 0; i < 200; ++i){
+        stars.emplace_back(ofRandomWidth(), ofRandomHeight());
+      }
+    
+    lander.loadModel("geo/lander.obj");
+    lander.setScaleNormalization(false);
+    lander.setPosition(0, 0, 0);
+    bLanderLoaded = true;
 
 	//  Create Octree for testing.
 	//
-	
 	octree.create(mars.getMesh(0), 20);
 	
-	cout << "Number of Verts: " << mars.getMesh(0).getNumVertices() << endl;
-	if(timingInfo)
-		cout << "Tree Build Time: " << ofGetElapsedTimef() * 1000 << endl;
-
+//	cout << "Number of Verts: " << mars.getMesh(0).getNumVertices() << endl;
 }
  
 //--------------------------------------------------------------
@@ -88,11 +93,14 @@ void ofApp::update() {
 void ofApp::draw() {
 
 	ofBackground(ofColor::black);
-
-	glDepthMask(false);
-	if (!bHide) gui.draw();
-	glDepthMask(true);
-
+    
+    ofDisableDepthTest();
+    glDepthMask(false);
+    if (!bHide) gui.draw();
+    drawStarfield();
+    glDepthMask(true);
+    ofEnableDepthTest();
+    
 	cam.begin();
 	ofPushMatrix();
 	if (bWireframe) {                    // wireframe mode  (include axis)
@@ -376,8 +384,6 @@ bool ofApp::raySelectWithOctree(ofVec3f &pointRet) {
 
 	float startTime = ofGetElapsedTimef() * 1000;
 	pointSelected = octree.intersect(ray, octree.root, selectedNode);
-	if (timingInfo)
-		cout << "Recursive Search Time: " << (ofGetElapsedTimef() * 1000) - startTime << endl;
 
 	if (pointSelected) {
 		pointRet = octree.mesh.getVertex(selectedNode.points[0]);
@@ -620,4 +626,11 @@ glm::vec3 ofApp::getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm) {
 		return intersectPoint;
 	}
 	else return glm::vec3(0, 0, 0);
+}
+
+void ofApp::drawStarfield() {
+  ofSetColor(255);
+  for(auto &p : stars) {
+    ofDrawCircle(p.x, p.y, 1);
+  }
 }

@@ -36,6 +36,7 @@ class ofApp : public ofBaseApp{
 		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
 		bool raySelectWithOctree(ofVec3f &pointRet);
 		glm::vec3 getMousePointOnPlane(glm::vec3 p , glm::vec3 n);
+        void drawStarfield();
 
 		ofEasyCam cam;
 		ofxAssimpModelLoader mars, lander;
@@ -49,9 +50,8 @@ class ofApp : public ofBaseApp{
 		glm::vec3 mouseDownPos, mouseLastPos;
 		bool bInDrag = false;
 
-
 		ofxIntSlider numLevels;
-		ofxToggle timingInfo;
+//		ofxToggle timingInfo;
 		ofxPanel gui;
 
 		bool bAltKeyDown;
@@ -78,4 +78,6 @@ class ofApp : public ofBaseApp{
 		bool bResolveCollision = false;
 		glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
 		float collisionSpeed = 0.1;
+    
+        vector<ofPoint> stars;
 };
