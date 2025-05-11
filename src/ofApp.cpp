@@ -56,6 +56,13 @@ void ofApp::setup(){
     lander.setScaleNormalization(false);
     lander.setPosition(0, 0, 0);
     bLanderLoaded = true;
+    
+    // Spacecraft additional light that can be toggled on/off
+    shipLight.setPointLight();
+    shipLight.setDiffuseColor(ofFloatColor(1,1,1));
+    shipLight.setSpecularColor(ofFloatColor(1,1,1));
+//    shipLight.enable();
+//    shipLight.disable();
 
 	//  Create Octree for testing.
 	//
@@ -68,26 +75,35 @@ void ofApp::setup(){
 // incrementally update scene (animation)
 //
 void ofApp::update() {
-	ofVec3f min = lander.getSceneMin() + lander.getPosition();
-	ofVec3f max = lander.getSceneMax() + lander.getPosition();
-
-	Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
-	if (bResolveCollision) {
-		// Move the lander **backward** along the collision direction
-		glm::vec3 pos = lander.getPosition();
-		pos += collisionDirection * collisionSpeed;  // Small movement step backward
-		lander.setPosition(pos.x, pos.y, pos.z);
-
-		// Check if still colliding
-		vector<Box> collisions;
-		octree.intersect(bounds, octree.root, collisions);
-
-		if (collisions.size() < 10) {
-			// Done resolving collision
-			bResolveCollision = false;
-			//cout << "Collision resolved!" << endl;
-		}
-	}
+    ofVec3f min = lander.getSceneMin() + lander.getPosition();
+    ofVec3f max = lander.getSceneMax() + lander.getPosition();
+    
+    Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+    if (bResolveCollision) {
+        // Move the lander **backward** along the collision direction
+        glm::vec3 pos = lander.getPosition();
+        pos += collisionDirection * collisionSpeed;  // Small movement step backward
+        lander.setPosition(pos.x, pos.y, pos.z);
+        
+        // Check if still colliding
+        vector<Box> collisions;
+        octree.intersect(bounds, octree.root, collisions);
+        
+        if (collisions.size() < 10) {
+            // Done resolving collision
+            bResolveCollision = false;
+            //cout << "Collision resolved!" << endl;
+        }
+    }
+    
+    glm::vec3 lp = lander.getPosition() + glm::vec3(0, 1, 0);
+    shipLight.setPosition(lp);
+    if (bShipLightOn) {
+        shipLight.enable();
+    }
+    else {
+        shipLight.disable();
+    }
 }
 //--------------------------------------------------------------
 void ofApp::draw() {
@@ -192,6 +208,20 @@ void ofApp::draw() {
 		ofSetColor(ofColor::lightGreen);
 		ofDrawSphere(p, .02 * d.length());
 	}
+    
+    if (bShowTelemetry) {
+        glm::vec3 origin = lander.getPosition();
+        Ray downRay(Vector3(origin.x, origin.y, origin.z),
+                        Vector3(0, -1, 0));
+        TreeNode hitNode;
+        float altitude = 0;
+        if (octree.intersect(downRay, octree.root, hitNode)) {
+            auto v = octree.mesh.getVertex(hitNode.points[0]);
+            altitude = origin.y - v.y;
+        }
+        ofSetColor(ofColor::white);
+        ofDrawBitmapString("Altitude AGL: " + ofToString(altitude, 2),10, 20);
+    }
 
 	ofPopMatrix();
 	cam.end();
@@ -246,7 +276,8 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'L':
 	case 'l':
-		bDisplayLeafNodes = !bDisplayLeafNodes;
+        bShipLightOn = !bShipLightOn;
+//		bDisplayLeafNodes = !bDisplayLeafNodes;
 		break;
 	case 'O':
 	case 'o':
@@ -271,6 +302,9 @@ void ofApp::keyPressed(int key) {
 	case 'w':
 		toggleWireframeMode();
 		break;
+    case 'g':
+        bShowTelemetry = !bShowTelemetry;
+        break;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -628,6 +662,7 @@ glm::vec3 ofApp::getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm) {
 	else return glm::vec3(0, 0, 0);
 }
 
+// Draws stars for 2D image background
 void ofApp::drawStarfield() {
   ofSetColor(255);
   for(auto &p : stars) {

@@ -67,9 +67,12 @@ class ofApp : public ofBaseApp{
 		
 		bool bLanderLoaded;
 		bool bTerrainSelected;
+        bool bShowTelemetry  = false;
+        bool bShipLightOn    = false;
 	
 		ofVec3f selectedPoint;
 		ofVec3f intersectPoint;
+        ofLight shipLight;
 
 		vector<Box> bboxList;
 
