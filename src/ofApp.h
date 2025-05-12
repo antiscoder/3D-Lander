@@ -49,10 +49,12 @@ class ofApp : public ofBaseApp{
 		TreeNode selectedNode;
 		glm::vec3 mouseDownPos, mouseLastPos;
 		bool bInDrag = false;
-
-		ofxIntSlider numLevels;
+        
+        ofxPanel gui;
+        ofxLabel altitudeLabel;
+//		ofxIntSlider numLevels;
 //		ofxToggle timingInfo;
-		ofxPanel gui;
+		
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;

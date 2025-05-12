@@ -41,7 +41,8 @@ void ofApp::setup(){
 	// create sliders for testing
 	//
 	gui.setup();
-	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
+    gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
+//	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
 	bHide = false;
 
 	mars.loadModel("geo/moon-houdini.obj");
@@ -95,6 +96,17 @@ void ofApp::update() {
             //cout << "Collision resolved!" << endl;
         }
     }
+    
+    glm::vec3 origin = lander.getPosition();
+    Ray downRay(Vector3(origin.x, origin.y, origin.z),
+                    Vector3(0, -1, 0));
+    TreeNode hitNode;
+    float altitude = 0;
+    if (octree.intersect(downRay, octree.root, hitNode)) {
+        auto v = octree.mesh.getVertex(hitNode.points[0]);
+        altitude = origin.y - v.y;
+    }
+    altitudeLabel = ofToString(altitude, 2);
     
     glm::vec3 lp = lander.getPosition() + glm::vec3(0, 1, 0);
     shipLight.setPosition(lp);
@@ -197,7 +209,7 @@ void ofApp::draw() {
 	else if (bDisplayOctree) {
 		ofNoFill();
 		ofSetColor(ofColor::white);
-		octree.draw(numLevels, 0);
+//		octree.draw(numLevels, 0);
 	}
 
 	// if point selected, draw a sphere
@@ -209,20 +221,6 @@ void ofApp::draw() {
 		ofDrawSphere(p, .02 * d.length());
 	}
     
-    if (bShowTelemetry) {
-        glm::vec3 origin = lander.getPosition();
-        Ray downRay(Vector3(origin.x, origin.y, origin.z),
-                        Vector3(0, -1, 0));
-        TreeNode hitNode;
-        float altitude = 0;
-        if (octree.intersect(downRay, octree.root, hitNode)) {
-            auto v = octree.mesh.getVertex(hitNode.points[0]);
-            altitude = origin.y - v.y;
-        }
-        ofSetColor(ofColor::white);
-        ofDrawBitmapString("Altitude AGL: " + ofToString(altitude, 2),10, 20);
-    }
-
 	ofPopMatrix();
 	cam.end();
 }
