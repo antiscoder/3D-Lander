@@ -30,7 +30,7 @@ void ofApp::setup(){
 	cam.setNearClip(.1);
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
 	ofSetVerticalSync(true);
-	cam.disableMouseInput();
+    cam.enableMouseInput();
 	ofEnableSmoothing();
 	ofEnableDepthTest();
 
@@ -41,7 +41,10 @@ void ofApp::setup(){
 	// create sliders for testing
 	//
 	gui.setup();
+    
+    // Right now no toggle, have to add later
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
+    
 //	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
 	bHide = false;
 
@@ -116,6 +119,27 @@ void ofApp::update() {
     else {
         shipLight.disable();
     }
+    
+    // Different camera angles
+    glm::vec3 L = lander.getPosition();
+    switch(currentCam) {
+        case FREE_CAM:
+            break;
+        case TRACK_CAM:
+            cam.disableMouseInput();
+            cam.setPosition(L + glm::vec3(0,5,10));
+            cam.lookAt(L);
+            break;
+        case COCKPIT_CAM:
+            cam.disableMouseInput();
+            glm::vec3 forward = glm::normalize(
+            (lander.getModelMatrix() * glm::vec4(0,0,1,0))
+                                               );
+            cam.setPosition(L);
+            cam.lookAt(L + forward);
+            break;
+    }
+        
 }
 //--------------------------------------------------------------
 void ofApp::draw() {
@@ -260,11 +284,27 @@ void ofApp::keyPressed(int key) {
 	case 'b':
 		bDisplayBBoxes = !bDisplayBBoxes;
 		break;
-	case 'C':
+    case 'C':
+        if(currentCam == FREE_CAM) {
+            currentCam   = lastFixedCam;
+            cam.disableMouseInput();
+        }
+        else {
+            lastFixedCam = currentCam;
+            currentCam   = FREE_CAM;
+            cam.enableMouseInput();
+        }
+        break;
 	case 'c':
-		if (cam.getMouseInputEnabled()) cam.disableMouseInput();
-		else cam.enableMouseInput();
-		break;
+        if(currentCam == TRACK_CAM) {
+            currentCam = COCKPIT_CAM;
+        }
+        else {
+            currentCam = TRACK_CAM;
+        }
+        lastFixedCam = currentCam;
+        cam.disableMouseInput();
+        break;
 	case 'F':
 	case 'f':
 		ofToggleFullscreen();
@@ -376,8 +416,8 @@ void ofApp::mousePressed(int x, int y, int button) {
 
 	// if moving camera, don't allow mouse interaction
 	//
-	if (cam.getMouseInputEnabled()) return;
-
+    if (currentCam != FREE_CAM) return;
+    
 	// if rover is loaded, test for selection
 	//
 	if (bLanderLoaded) {
@@ -391,6 +431,7 @@ void ofApp::mousePressed(int x, int y, int button) {
 		Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
 		bool hit = bounds.intersect(Ray(Vector3(origin.x, origin.y, origin.z), Vector3(mouseDir.x, mouseDir.y, mouseDir.z)), 0, 10000);
 		if (hit) {
+            cam.disableMouseInput();
 			bLanderSelected = true;
 			mouseDownPos = getMousePointOnPlane(lander.getPosition(), cam.getZAxis());
 			mouseLastPos = mouseDownPos;
@@ -431,7 +472,7 @@ void ofApp::mouseDragged(int x, int y, int button) {
 
 	// if moving camera, don't allow mouse interaction
 	//
-	if (cam.getMouseInputEnabled()) return;
+    if (currentCam != FREE_CAM) return;
 
 	if (bInDrag) {
 
@@ -463,6 +504,9 @@ void ofApp::mouseDragged(int x, int y, int button) {
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button) {
 	bInDrag = false;
+    if (currentCam == FREE_CAM) {
+        cam.enableMouseInput();
+    }
 }
 
 

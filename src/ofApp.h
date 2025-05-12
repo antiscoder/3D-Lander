@@ -37,6 +37,10 @@ class ofApp : public ofBaseApp{
 		bool raySelectWithOctree(ofVec3f &pointRet);
 		glm::vec3 getMousePointOnPlane(glm::vec3 p , glm::vec3 n);
         void drawStarfield();
+    
+        enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM };
+        CamMode currentCam = FREE_CAM;
+        CamMode lastFixedCam = TRACK_CAM;
 
 		ofEasyCam cam;
 		ofxAssimpModelLoader mars, lander;
@@ -69,8 +73,8 @@ class ofApp : public ofBaseApp{
 		
 		bool bLanderLoaded;
 		bool bTerrainSelected;
-        bool bShowTelemetry  = false;
-        bool bShipLightOn    = false;
+        bool bShowTelemetry = false;
+        bool bShipLightOn = false;
 	
 		ofVec3f selectedPoint;
 		ofVec3f intersectPoint;
