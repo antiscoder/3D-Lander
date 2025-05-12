@@ -56,6 +56,7 @@ class ofApp : public ofBaseApp{
         
         ofxPanel gui;
         ofxLabel altitudeLabel;
+    ofxLabel fuelLabel;
 //		ofxIntSlider numLevels;
 //		ofxToggle timingInfo;
 		
@@ -90,7 +91,9 @@ class ofApp : public ofBaseApp{
 
 		float shipVelocity = 0.0;
 		float shipAcceleration = 0.0;
-
+        float fuel = 120.0f;
+        float fuelTimer = 0.0f;
+    
 		bool landingStarted = false;
     
         vector<ofPoint> stars;
