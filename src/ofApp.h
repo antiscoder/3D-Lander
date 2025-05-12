@@ -87,6 +87,13 @@ class ofApp : public ofBaseApp{
 		bool bResolveCollision = false;
 		glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
 		float collisionSpeed = 0.1;
+
+		float shipVelocity = 0.0;
+		float shipAcceleration = 0.0;
+
+		bool landingStarted = false;
     
         vector<ofPoint> stars;
+
+		map<int, bool> keymap;
 };
