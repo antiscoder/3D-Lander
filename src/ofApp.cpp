@@ -58,7 +58,9 @@ void ofApp::setup(){
     
     lander.loadModel("geo/lander.obj");
     lander.setScaleNormalization(false);
-    lander.setPosition(0, 0, 0);
+    lander.setPosition(0,50, 0);
+	shipVelocity = 0;
+	shipAcceleration = -(1.625 / std::pow(ofGetFrameRate(), 2));
     bLanderLoaded = true;
     
     // Spacecraft additional light that can be toggled on/off
@@ -81,17 +83,30 @@ void ofApp::setup(){
 void ofApp::update() {
     ofVec3f min = lander.getSceneMin() + lander.getPosition();
     ofVec3f max = lander.getSceneMax() + lander.getPosition();
+
+	Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+
+	vector<Box> collisions;
+	octree.intersect(bounds, octree.root, collisions);
+
+	if (landingStarted) {
+		if (collisions.size() < 10) {
+			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
+			if (keymap[32]) {
+				shipVelocity += (20.0 / std::pow(ofGetFrameRate(),2));
+				cout << "lol" << endl;
+			}
+			shipVelocity += shipAcceleration;
+		}
+	}
+
     
-    Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
     if (bResolveCollision) {
         // Move the lander **backward** along the collision direction
         glm::vec3 pos = lander.getPosition();
         pos += collisionDirection * collisionSpeed;  // Small movement step backward
         lander.setPosition(pos.x, pos.y, pos.z);
-        
-        // Check if still colliding
-        vector<Box> collisions;
-        octree.intersect(bounds, octree.root, collisions);
+       
         
         if (collisions.size() < 10) {
             // Done resolving collision
@@ -343,6 +358,9 @@ void ofApp::keyPressed(int key) {
     case 'g':
         bShowTelemetry = !bShowTelemetry;
         break;
+	case '1':
+		landingStarted=true;
+		break;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -369,6 +387,8 @@ void ofApp::keyPressed(int key) {
 			//cout << colBoxList.size() << endl;
 		}
 	}
+
+	keymap[key] = true;
 }
 
 void ofApp::toggleWireframeMode() {
@@ -400,6 +420,7 @@ void ofApp::keyReleased(int key) {
 		break;
 
 	}
+	keymap[key] = false;
 }
 
 
