@@ -44,6 +44,7 @@ void ofApp::setup(){
     
     // Right now no toggle, have to add later
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
+    gui.add(fuelLabel.setup("Fuel (s)", ofToString((int)fuel)));
     
 //	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
 	bHide = false;
@@ -81,6 +82,8 @@ void ofApp::setup(){
 // incrementally update scene (animation)
 //
 void ofApp::update() {
+    float dt = ofGetLastFrameTime();
+    
     ofVec3f min = lander.getSceneMin() + lander.getPosition();
     ofVec3f max = lander.getSceneMax() + lander.getPosition();
 
@@ -92,11 +95,18 @@ void ofApp::update() {
 	if (landingStarted) {
 		if (collisions.size() < 10) {
 			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
-			if (keymap[32]) {
+			if (keymap[32] && fuel > 0.0f) {
 				shipVelocity += (20.0 / std::pow(ofGetFrameRate(),2));
-				cout << "lol" << endl;
+                fuelTimer += 1.0f / ofGetFrameRate();
+                if (fuelTimer >= 1.0f) {
+                    fuelTimer -= 1.0f;
+                    fuel = std::max(0.0f, fuel - 1.0f);
+                    fuelLabel = ofToString((int)fuel);
+                }
 			}
 			shipVelocity += shipAcceleration;
+            glm::vec3 P = lander.getPosition();
+            lander.setPosition(P.x, P.y + shipVelocity, P.z);
 		}
 	}
 
