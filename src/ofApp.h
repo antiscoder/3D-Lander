@@ -4,12 +4,53 @@
 #include "ofxGui.h"
 #include  "ofxAssimpModelLoader.h"
 #include "Octree.h"
+#include "Emitter.h"
+#include "Shape.h"
 
+
+float RandomFloat(float a, float b) {
+	float random = ((float)rand()) / (float)RAND_MAX;
+	float diff = b - a;
+	float r = random * diff;
+	return a + r;
+}
+
+class Agent : public Particle {
+public:
+	Agent() {
+		Particle::Particle();
+		//		cout << "in Agent Constuctor" << endl;
+	}
+};
+
+class AgentEmitter : public Emitter {
+public:
+	void AgentEmitter::spawnSprite() {
+		//		cout << "in AgentEmitter::spawnSprite" << endl;
+		Agent particle;
+		particle.velocity = velocity;
+		particle.lifespan = lifespan;
+		particle.pos = pos;
+		particle.birthtime = ofGetElapsedTimeMillis();
+		sys->add(particle);
+	}
+	void moveSprite(Particle* particle) {
+		Emitter::moveParticle(particle);
+
+		// Align path of travel to velocity 
+		//
+		glm::vec3 v = glm::normalize(particle->velocity);
+		glm::vec3 u = glm::vec3(0, -1, 0);
+		float a = glm::orientedAngle(u, v, glm::vec3(0, 0, 1));
+		particle->rot = glm::degrees(a);
+	}
+};
 
 
 class ofApp : public ofBaseApp{
 
 	public:
+
 		void setup();
 		void update();
 		void draw();
@@ -81,6 +122,8 @@ class ofApp : public ofBaseApp{
 		ofVec3f intersectPoint;
         ofLight shipLight;
 
+		Emitter* shooter = NULL;
+
 		vector<Box> bboxList;
 
 		const float selectionRange = 4.0;
@@ -91,6 +134,10 @@ class ofApp : public ofBaseApp{
 
 		float shipVelocity = 0.0;
 		float shipAcceleration = 0.0;
+		float shipVelocityX = 0.0;
+		float shipAccelerationX = 0.0;
+		float shipVelocityZ = 0.0;
+		float shipAccelerationZ = 0.0;
         float fuel = 120.0f;
         float fuelTimer = 0.0f;
     
