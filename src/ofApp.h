@@ -7,8 +7,8 @@
 #include "Emitter.h"
 #include "Shape.h"
 
-
-float RandomFloat(float a, float b) {
+// added inline to fix linker
+inline float RandomFloat(float a, float b) {
 	float random = ((float)rand()) / (float)RAND_MAX;
 	float diff = b - a;
 	float r = random * diff;
@@ -17,15 +17,16 @@ float RandomFloat(float a, float b) {
 
 class Agent : public Particle {
 public:
-	Agent() {
-		Particle::Particle();
+	Agent() : Particle(){
+//		Particle::Particle();
 		//		cout << "in Agent Constuctor" << endl;
 	}
 };
 
 class AgentEmitter : public Emitter {
 public:
-	void AgentEmitter::spawnSprite() {
+    void spawnSprite(){
+//	void AgentEmitter::spawnSprite() {
 		//		cout << "in AgentEmitter::spawnSprite" << endl;
 		Agent particle;
 		particle.velocity = velocity;
