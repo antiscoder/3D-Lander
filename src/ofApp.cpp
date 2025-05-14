@@ -14,11 +14,34 @@
 #include "Util.h"
 #include <glm/gtx/intersect.hpp>
 
-
+static void explode(glm::vec3 pos, Emitter* em) {
+	for (int x = 0; x < 300; x++) {
+		Particle child;
+		child.birthtime = ofGetElapsedTimeMillis();
+		child.lifespan = 1000;
+		child.pos = pos;
+		child.velocity = glm::vec3(RandomFloat(-3000, 3000), RandomFloat(-3000, 3000), RandomFloat(-3000, 3000));
+		child.scale = glm::vec3(0.15, 0.15, 0.15);
+		em->sys->add(child);
+	}
+}
+static void thrust(glm::vec3 pos, Emitter* em) {
+	for (int x = 0; x < 10; x++) {
+		Particle child;
+		child.radius = 1;
+		child.birthtime = ofGetElapsedTimeMillis();
+		child.lifespan = 50;
+		child.pos = pos;
+		child.velocity = glm::vec3(RandomFloat(-30, 30), RandomFloat(-300, 0), RandomFloat(-30, 30));
+		child.scale = glm::vec3(0.1, 0.1, 0.1);
+		em->sys->add(child);
+	}
+}
 //--------------------------------------------------------------
 // setup scene, lighting, state and load geometry
 //
 void ofApp::setup(){
+
 	bWireframe = false;
 	bDisplayPoints = false;
 	bAltKeyDown = false;
@@ -62,6 +85,10 @@ void ofApp::setup(){
     lander.setPosition(0,50, 0);
 	shipVelocity = 0;
 	shipAcceleration = -(1.625 / std::pow(ofGetFrameRate(), 2));
+	shipVelocityX = 0;
+	shipAccelerationX = (1 / std::pow(ofGetFrameRate(), 2));
+	shipVelocityZ = 0;
+	shipAccelerationZ = (1 / std::pow(ofGetFrameRate(), 2));
     bLanderLoaded = true;
     
     // Spacecraft additional light that can be toggled on/off
@@ -70,6 +97,15 @@ void ofApp::setup(){
     shipLight.setSpecularColor(ofFloatColor(1,1,1));
 //    shipLight.enable();
 //    shipLight.disable();
+
+	shooter = new AgentEmitter();
+	shooter->emitterVelocity = shipVelocity;
+	shooter->emitterAcceleration = shipAcceleration;
+	shooter->drawable = true;
+
+	shooter->pos = lander.getPosition();
+
+	shooter->start();
 
 	//  Create Octree for testing.
 	//
@@ -91,22 +127,46 @@ void ofApp::update() {
 
 	vector<Box> collisions;
 	octree.intersect(bounds, octree.root, collisions);
-
+	shooter->update();
 	if (landingStarted) {
 		if (collisions.size() < 10) {
+			lander.setScale(1, 1, 1);
 			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
 			if (keymap[32] && fuel > 0.0f) {
-				shipVelocity += (20.0 / std::pow(ofGetFrameRate(),2));
-                fuelTimer += 1.0f / ofGetFrameRate();
-                if (fuelTimer >= 1.0f) {
-                    fuelTimer -= 1.0f;
-                    fuel = std::max(0.0f, fuel - 1.0f);
-                    fuelLabel = ofToString((int)fuel);
-                }
+				shipVelocity += (20.0 / std::pow(ofGetFrameRate(), 2));
+				thrust(lander.getPosition(), shooter);
+				fuelTimer += 1.0f / ofGetFrameRate();
+				if (fuelTimer >= 1.0f) {
+					fuelTimer -= 1.0f;
+					fuel = std::max(0.0f, fuel - 1.0f);
+					fuelLabel = ofToString((int)fuel);
+				}
+			}
+			if (keymap[OF_KEY_LEFT]) {
+				shipVelocityX -= shipAccelerationX;
+			}
+			if (keymap[OF_KEY_RIGHT]) {
+				shipVelocityX += shipAccelerationX;
+			}
+			if (keymap[OF_KEY_UP]) {
+				shipVelocityZ -= shipAccelerationZ;
+			}
+			if (keymap[OF_KEY_DOWN]) {
+				shipVelocityZ += shipAccelerationZ;
 			}
 			shipVelocity += shipAcceleration;
-            glm::vec3 P = lander.getPosition();
-            lander.setPosition(P.x, P.y + shipVelocity, P.z);
+			glm::vec3 P = lander.getPosition();
+			lander.setPosition(P.x + shipVelocityX, P.y + shipVelocity, P.z + shipVelocityZ);
+			shooter->pos = lander.getPosition();
+		}
+		else {
+			cout << shipVelocity << endl;
+			if (std::abs(shipVelocity) > 0.015) {
+				explode(lander.getPosition(), shooter);
+				lander.setScale(0, 0, 0);
+			}
+			shipVelocity = 0;
+			landingStarted = false;
 		}
 	}
 
@@ -178,6 +238,8 @@ void ofApp::draw() {
     glDepthMask(true);
     ofEnableDepthTest();
     
+	ofSetColor(ofColor::white);
+
 	cam.begin();
 	ofPushMatrix();
 	if (bWireframe) {                    // wireframe mode  (include axis)
@@ -208,6 +270,7 @@ void ofApp::draw() {
 					ofPopMatrix();
 				}
 			}
+			shooter->draw();
 
 			if (bLanderSelected) {
 
