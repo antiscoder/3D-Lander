@@ -163,12 +163,26 @@ void ofApp::update() {
 			cout << shipVelocity << endl;
 			if (std::abs(shipVelocity) > 0.015) {
 				explode(lander.getPosition(), shooter);
-				lander.setScale(0, 0, 0);
+                explosionVelocity = glm::vec3(
+                        ofRandom(-150, 150),
+                        ofRandom(200, 300),
+                        ofRandom(-150, 150)
+                    );
+                explosionActive = true;
+                landingStarted = false;
+                gameOver = true;
+                showGameOverText = true;
 			}
-			shipVelocity = 0;
-			landingStarted = false;
 		}
 	}
+    
+    if (explosionActive) {
+        glm::vec3 pos = lander.getPosition();
+        explosionVelocity += glm::vec3(0, -0.2, 0);
+        pos += explosionVelocity * ofGetLastFrameTime();
+        lander.setPosition(pos.x, pos.y, pos.z);
+        lander.setRotation(0, ofRandom(-5, 5), 0, 1, 0);
+    }
 
     
     if (bResolveCollision) {
@@ -335,6 +349,11 @@ void ofApp::draw() {
     
 	ofPopMatrix();
 	cam.end();
+    
+    if (showGameOverText) {
+        ofSetColor(ofColor::red);
+        ofDrawBitmapString("YOU LOSE!\nPress R to Restart", ofGetWidth()/2 - 60, ofGetHeight()/2);
+    }
 }
 
 
@@ -409,7 +428,7 @@ void ofApp::keyPressed(int key) {
 	case 'o':
 		bDisplayOctree = !bDisplayOctree;
 		break;
-	case 'r':
+	case 'R':
 		cam.reset();
 		break;
 	case 's':
@@ -460,6 +479,10 @@ void ofApp::keyPressed(int key) {
 			//cout << colBoxList.size() << endl;
 		}
 	}
+    
+    if (gameOver && key == 'r') {
+        restartGame();
+    }
 
 	keymap[key] = true;
 }
@@ -804,4 +827,19 @@ void ofApp::drawStarfield() {
   for(auto &p : stars) {
     ofDrawCircle(p.x, p.y, 1);
   }
+}
+
+void ofApp::restartGame() {
+    gameOver = false;
+    showGameOverText = false;
+    explosionActive = false;
+    shipVelocity = 0;
+    shipVelocityX = 0;
+    shipVelocityZ = 0;
+    fuel = 120.0f;
+    fuelTimer = 0.0f;
+    lander.setPosition(0, 50, 0); // or initial spawn point
+    lander.setScale(1, 1, 1);
+    shooter->sys->particles.clear(); // clear old particles
+    landingStarted = false;
 }

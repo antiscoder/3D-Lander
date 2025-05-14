@@ -79,6 +79,7 @@ class ofApp : public ofBaseApp{
 		bool raySelectWithOctree(ofVec3f &pointRet);
 		glm::vec3 getMousePointOnPlane(glm::vec3 p , glm::vec3 n);
         void drawStarfield();
+        void restartGame();
     
         enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM };
         CamMode currentCam = FREE_CAM;
@@ -101,7 +102,9 @@ class ofApp : public ofBaseApp{
     ofxLabel fuelLabel;
 //		ofxIntSlider numLevels;
 //		ofxToggle timingInfo;
-		
+    
+        bool gameOver = false;
+        bool showGameOverText = false;
 
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -128,10 +131,13 @@ class ofApp : public ofBaseApp{
 		vector<Box> bboxList;
 
 		const float selectionRange = 4.0;
-
+        
 		bool bResolveCollision = false;
 		glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
 		float collisionSpeed = 0.1;
+    
+        glm::vec3 explosionVelocity;
+        bool explosionActive = false;
 
 		float shipVelocity = 0.0;
 		float shipAcceleration = 0.0;
