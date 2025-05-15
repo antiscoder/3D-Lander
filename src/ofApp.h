@@ -112,6 +112,7 @@ class ofApp : public ofBaseApp{
         bool explosionActive = false;
         bool bResolveCollision = false;
         bool landingStarted = false;
+        bool gameWin = false;
 
 		Emitter* shooter = NULL;
 		
@@ -127,9 +128,12 @@ class ofApp : public ofBaseApp{
         float fuelTimer = 0.0f;
         float landerRotation = 0.0f;
         float rotationSpeed = 1.0f;
+        float landingZoneSize = 15.0f;
     
         vector<Box> bboxList;
         vector<ofPoint> stars;
+        vector<glm::vec3> landingZones;
+
 
 		map<int, bool> keymap;
 };
