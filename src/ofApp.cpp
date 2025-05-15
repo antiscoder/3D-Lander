@@ -46,6 +46,13 @@ void ofApp::setup(){
 	ofEnableSmoothing();
 	ofEnableDepthTest();
 
+	ofSetFrameRate(60);
+
+	bumpS.load("sounds/bump.wav");
+	crashS.load("sounds/crash.wav");
+	shootS.load("sounds/shoot.wav");
+	thrustS.load("sounds/thrust.wav");
+
 	// setup rudimentary lighting 
 	//
 	initLightingAndMaterials();
@@ -124,8 +131,11 @@ void ofApp::update() {
             
             // (1) Thrust upward with spacebar and fuel system
 			if (keymap[32] && fuel > 0.0f) {
-				shipVelocity += (20.0 / std::pow(ofGetFrameRate(), 2));
+				shipVelocity += (10.0 / std::pow(ofGetFrameRate(), 2));
 				thrust(lander.getPosition(), shooter);
+				thrustS.setLoop(true);
+				if (!thrustS.isPlaying())
+					thrustS.play();
 				fuelTimer += 1.0f / ofGetFrameRate();
                 // (1) Fuel decrementation
 				if (fuelTimer >= 1.0f) {
@@ -138,17 +148,33 @@ void ofApp::update() {
             // (1) Ship maneuvering
 			if (keymap[OF_KEY_LEFT]) {
 				shipVelocityX -= shipAccelerationX;
+				thrustS.setLoop(true);
+				if (!thrustS.isPlaying())
+					thrustS.play();
 			}
 			if (keymap[OF_KEY_RIGHT]) {
 				shipVelocityX += shipAccelerationX;
+				thrustS.setLoop(true);
+				if (!thrustS.isPlaying())
+					thrustS.play();
 			}
 			if (keymap[OF_KEY_UP]) {
 				shipVelocityZ -= shipAccelerationZ;
+				thrustS.setLoop(true);
+				if (!thrustS.isPlaying())
+					thrustS.play();
 			}
 			if (keymap[OF_KEY_DOWN]) {
 				shipVelocityZ += shipAccelerationZ;
+				thrustS.setLoop(true);
+				if (!thrustS.isPlaying())
+					thrustS.play();
+			}
+			if (!keymap[OF_KEY_DOWN] && !keymap[OF_KEY_UP] && !keymap[OF_KEY_LEFT] && !keymap[OF_KEY_RIGHT] && !keymap[32]) {
+				thrustS.setLoop(false);
 			}
 			shipVelocity += shipAcceleration;
+				
 			
             // Turbulence
             glm::vec3 P = lander.getPosition();
@@ -166,6 +192,7 @@ void ofApp::update() {
 			cout << shipVelocity << endl;
 			if (std::abs(shipVelocity) > 0.015) {
 				explode(lander.getPosition(), shooter);
+				crashS.play();
                 explosionVelocity = glm::vec3(
                         ofRandom(-150, 150),
                         ofRandom(200, 300),
@@ -215,6 +242,7 @@ void ofApp::update() {
         // Apply a damped upward bounce impulse
         glm::vec3 bounce = glm::vec3(0, impactForce * 1.2f, 0);
         collisionDirection = bounce;
+		bumpS.play();
         bResolveCollision = true;
         cout << "Soft collision: impulse applied\n";
 
@@ -245,18 +273,27 @@ void ofApp::update() {
         case FREE_CAM:
             break;
         case TRACK_CAM:
-            cam.disableMouseInput();
-            cam.setPosition(L + glm::vec3(0,5,10));
-            cam.lookAt(L);
+			{
+				cam.disableMouseInput();
+				cam.setPosition(L + glm::vec3(0,5,10));
+				cam.lookAt(L);
+			}
             break;
         case COCKPIT_CAM:
-            cam.disableMouseInput();
-            glm::vec3 forward = glm::normalize(
-            (lander.getModelMatrix() * glm::vec4(0,0,1,0))
-                                               );
-            cam.setPosition(L);
-            cam.lookAt(L + forward);
+			{
+				cam.disableMouseInput();
+				glm::vec3 forward = glm::normalize((lander.getModelMatrix() * glm::vec4(0,0,1,0)));
+				cam.setPosition(L);
+				cam.lookAt(L - forward);
+			}
             break;
+		case TOP_CAM:
+			{
+				cam.disableMouseInput();
+				cam.setPosition(L + glm::vec3(0, 10, 0));
+				cam.lookAt(L);
+			}
+			break;
     }
     lander.setRotation(0, landerRotation, 0, 1, 0);
 }
@@ -438,6 +475,9 @@ void ofApp::keyPressed(int key) {
         if(currentCam == TRACK_CAM) {
             currentCam = COCKPIT_CAM;
         }
+		else if (currentCam == COCKPIT_CAM) {
+			currentCam = TOP_CAM;
+		}
         else {
             currentCam = TRACK_CAM;
         }

@@ -69,7 +69,7 @@ class ofApp : public ofBaseApp{
         void drawStarfield();
         void restartGame();
     
-        enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM };
+        enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM, TOP_CAM };
         CamMode currentCam = FREE_CAM;
         CamMode lastFixedCam = TRACK_CAM;
 
@@ -136,4 +136,9 @@ class ofApp : public ofBaseApp{
 
 
 		map<int, bool> keymap;
+
+		ofSoundPlayer   bumpS;
+		ofSoundPlayer   crashS;
+		ofSoundPlayer   shootS;
+		ofSoundPlayer   thrustS;
 };
