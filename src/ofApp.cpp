@@ -14,6 +14,7 @@ static void explode(glm::vec3 pos, Emitter* em) {
 	}
 }
 
+// (3) Rocket exhaust uses particle emitter
 static void thrust(glm::vec3 pos, Emitter* em) {
 	for (int x = 0; x < 10; x++) {
 		Particle child;
@@ -113,16 +114,21 @@ void ofApp::update() {
 		if (collisions.size() < 10) {
 			lander.setScale(1, 1, 1);
 			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
+            
+            // (1) Thrust upward with spacebar and fuel system
 			if (keymap[32] && fuel > 0.0f) {
 				shipVelocity += (20.0 / std::pow(ofGetFrameRate(), 2));
 				thrust(lander.getPosition(), shooter);
 				fuelTimer += 1.0f / ofGetFrameRate();
+                // (1) Fuel decrementation
 				if (fuelTimer >= 1.0f) {
 					fuelTimer -= 1.0f;
 					fuel = std::max(0.0f, fuel - 1.0f);
 					fuelLabel = ofToString((int)fuel);
 				}
 			}
+            
+            // (1) Ship maneuvering
 			if (keymap[OF_KEY_LEFT]) {
 				shipVelocityX -= shipAccelerationX;
 			}
@@ -176,17 +182,35 @@ void ofApp::update() {
             bResolveCollision = false;
         }
     }
-    
-    glm::vec3 origin = lander.getPosition();
-    Ray downRay(Vector3(origin.x, origin.y, origin.z),
-                    Vector3(0, -1, 0));
-    TreeNode hitNode;
-    float altitude = 0;
-    if (octree.intersect(downRay, octree.root, hitNode)) {
-        auto v = octree.mesh.getVertex(hitNode.points[0]);
-        altitude = origin.y - v.y;
+    else if (!bResolveCollision && collisions.size() >= 10) {
+        float impactForce = std::abs(shipVelocity);
+
+        // Apply a damped upward bounce impulse
+        glm::vec3 bounce = glm::vec3(0, impactForce * 1.2f, 0);
+        collisionDirection = bounce;
+        bResolveCollision = true;
+        cout << "Soft collision: impulse applied\n";
+
+        // Reset velocities for stability
+        shipVelocity = 0;
+        shipVelocityX = 0;
+        shipVelocityZ = 0;
     }
-    altitudeLabel = ofToString(altitude, 2);
+    
+    // (2) AGL telemetry sensor and toggling
+    if (bShowTelemetry) {
+        glm::vec3 origin = lander.getPosition();
+        Ray downRay(Vector3(origin.x, origin.y, origin.z), Vector3(0, -1, 0));
+        TreeNode hitNode;
+        float altitude = 0;
+        if (octree.intersect(downRay, octree.root, hitNode)) {
+            auto v = octree.mesh.getVertex(hitNode.points[0]);
+            altitude = origin.y - v.y;
+        }
+        altitudeLabel = ofToString(altitude, 2);
+    } else {
+        altitudeLabel = "OFF";
+    }
         
     // Different camera angles
     glm::vec3 L = lander.getPosition();
@@ -362,7 +386,7 @@ void ofApp::keyPressed(int key) {
 		break;
     case 'C':
         if(currentCam == FREE_CAM) {
-            currentCam   = lastFixedCam;
+            currentCam  = lastFixedCam;
             cam.disableMouseInput();
         }
         else {
@@ -594,7 +618,8 @@ void ofApp::mouseReleased(int x, int y, int button) {
 // Set the camera to use the selected point as it's new target
 //  
 void ofApp::setCameraTarget() {
-
+    cam.reset();
+    cam.setTarget(lander.getPosition());
 }
 
 
