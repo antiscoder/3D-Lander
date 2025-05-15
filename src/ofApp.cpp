@@ -38,9 +38,10 @@ void ofApp::setup(){
 	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
-	cam.setDistance(10);
+	bDisplayOctree = true;
+	cam.setDistance(60);
 	cam.setNearClip(.1);
-	cam.setFov(65.5);
+	cam.setFov(90);
 	ofSetVerticalSync(true);
     cam.enableMouseInput();
 	ofEnableSmoothing();
@@ -126,7 +127,6 @@ void ofApp::update() {
 	shooter->update();
 	if (landingStarted) {
 		if (collisions.size() < 10) {
-			lander.setScale(1, 1, 1);
 			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
             
             // (1) Thrust upward with spacebar and fuel system
@@ -269,8 +269,8 @@ void ofApp::update() {
         
     // Different camera angles
     glm::vec3 L = lander.getPosition();
-    switch(currentCam) {
-        case FREE_CAM:
+	switch (currentCam) {
+		case FREE_CAM:
             break;
         case TRACK_CAM:
 			{
@@ -282,6 +282,7 @@ void ofApp::update() {
         case COCKPIT_CAM:
 			{
 				cam.disableMouseInput();
+				bDisplayOctree = false;
 				glm::vec3 forward = glm::normalize((lander.getModelMatrix() * glm::vec4(0,0,1,0)));
 				cam.setPosition(L);
 				cam.lookAt(L - forward);
