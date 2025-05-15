@@ -1,15 +1,3 @@
-
-//--------------------------------------------------------------
-//
-//  Kevin M. Smith
-//
-//  Octree Test - startup scene
-// 
-//
-//  Student Name:   < Your Name goes Here >
-//  Date: <date of last version>
-
-
 #include "ofApp.h"
 #include "Util.h"
 #include <glm/gtx/intersect.hpp>
@@ -25,6 +13,7 @@ static void explode(glm::vec3 pos, Emitter* em) {
 		em->sys->add(child);
 	}
 }
+
 static void thrust(glm::vec3 pos, Emitter* em) {
 	for (int x = 0; x < 10; x++) {
 		Particle child;
@@ -37,21 +26,20 @@ static void thrust(glm::vec3 pos, Emitter* em) {
 		em->sys->add(child);
 	}
 }
+
 //--------------------------------------------------------------
 // setup scene, lighting, state and load geometry
 //
 void ofApp::setup(){
-
 	bWireframe = false;
 	bDisplayPoints = false;
 	bAltKeyDown = false;
 	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
-//	ofSetWindowShape(1024, 768);
 	cam.setDistance(10);
 	cam.setNearClip(.1);
-	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
+	cam.setFov(65.5);
 	ofSetVerticalSync(true);
     cam.enableMouseInput();
 	ofEnableSmoothing();
@@ -91,13 +79,6 @@ void ofApp::setup(){
 	shipAccelerationZ = (1 / std::pow(ofGetFrameRate(), 2));
     bLanderLoaded = true;
     
-    // Spacecraft additional light that can be toggled on/off
-    shipLight.setPointLight();
-    shipLight.setDiffuseColor(ofFloatColor(1,1,1));
-    shipLight.setSpecularColor(ofFloatColor(1,1,1));
-//    shipLight.enable();
-//    shipLight.disable();
-
 	shooter = new AgentEmitter();
 	shooter->emitterVelocity = shipVelocity;
 	shooter->emitterAcceleration = shipAcceleration;
@@ -186,16 +167,13 @@ void ofApp::update() {
 
     
     if (bResolveCollision) {
-        // Move the lander **backward** along the collision direction
         glm::vec3 pos = lander.getPosition();
-        pos += collisionDirection * collisionSpeed;  // Small movement step backward
+        pos += collisionDirection * collisionSpeed;
         lander.setPosition(pos.x, pos.y, pos.z);
        
         
         if (collisions.size() < 10) {
-            // Done resolving collision
             bResolveCollision = false;
-            //cout << "Collision resolved!" << endl;
         }
     }
     
@@ -209,16 +187,7 @@ void ofApp::update() {
         altitude = origin.y - v.y;
     }
     altitudeLabel = ofToString(altitude, 2);
-    
-    glm::vec3 lp = lander.getPosition() + glm::vec3(0, 1, 0);
-    shipLight.setPosition(lp);
-    if (bShipLightOn) {
-        shipLight.enable();
-    }
-    else {
-        shipLight.disable();
-    }
-    
+        
     // Different camera angles
     glm::vec3 L = lander.getPosition();
     switch(currentCam) {
@@ -421,8 +390,7 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'L':
 	case 'l':
-        bShipLightOn = !bShipLightOn;
-//		bDisplayLeafNodes = !bDisplayLeafNodes;
+        //		bDisplayLeafNodes = !bDisplayLeafNodes;
 		break;
 	case 'O':
 	case 'o':
@@ -468,17 +436,12 @@ void ofApp::keyPressed(int key) {
 		break;
 	}
 
-	if (key == 'i') { // 'r' to resolve collision
-		if (colBoxList.size() >= 10) {
+	if (key == 'i') {
+        if (colBoxList.size() >= 10) {
 			bResolveCollision = true;
-			// Reverse the last move direction or just move up slightly
-			collisionDirection = glm::vec3(0, 1, 0); // move up by default
-			//cout << colBoxList.size() << endl;
+			collisionDirection = glm::vec3(0, 1, 0);
 		}
-		else {
-			//cout << colBoxList.size() << endl;
-		}
-	}
+    }
     
     if (gameOver && key == 'r') {
         restartGame();

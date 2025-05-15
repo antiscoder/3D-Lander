@@ -1,5 +1,4 @@
 #pragma once
-
 #include "ofMain.h"
 #include "ofxGui.h"
 #include  "ofxAssimpModelLoader.h"
@@ -7,7 +6,6 @@
 #include "Emitter.h"
 #include "Shape.h"
 
-// added inline to fix linker
 inline float RandomFloat(float a, float b) {
 	float random = ((float)rand()) / (float)RAND_MAX;
 	float diff = b - a;
@@ -17,41 +15,31 @@ inline float RandomFloat(float a, float b) {
 
 class Agent : public Particle {
 public:
-	Agent() : Particle(){
-//		Particle::Particle();
-		//		cout << "in Agent Constuctor" << endl;
-	}
+	Agent() : Particle() {}
 };
 
 class AgentEmitter : public Emitter {
 public:
     void spawnSprite(){
-//	void AgentEmitter::spawnSprite() {
-		//		cout << "in AgentEmitter::spawnSprite" << endl;
-		Agent particle;
+        Agent particle;
 		particle.velocity = velocity;
 		particle.lifespan = lifespan;
 		particle.pos = pos;
 		particle.birthtime = ofGetElapsedTimeMillis();
 		sys->add(particle);
 	}
+    
 	void moveSprite(Particle* particle) {
 		Emitter::moveParticle(particle);
-
-		// Align path of travel to velocity 
-		//
-		glm::vec3 v = glm::normalize(particle->velocity);
+        glm::vec3 v = glm::normalize(particle->velocity);
 		glm::vec3 u = glm::vec3(0, -1, 0);
 		float a = glm::orientedAngle(u, v, glm::vec3(0, 0, 1));
 		particle->rot = glm::degrees(a);
 	}
 };
 
-
 class ofApp : public ofBaseApp{
-
 	public:
-
 		void setup();
 		void update();
 		void draw();
@@ -87,25 +75,27 @@ class ofApp : public ofBaseApp{
 
 		ofEasyCam cam;
 		ofxAssimpModelLoader mars, lander;
-		ofLight light;
-		Box boundingBox, landerBounds;
+        Box boundingBox, landerBounds;
 		Box testBox;
 		vector<Box> colBoxList;
-		bool bLanderSelected = false;
-		Octree octree;
+        Octree octree;
 		TreeNode selectedNode;
 		glm::vec3 mouseDownPos, mouseLastPos;
-		bool bInDrag = false;
-        
+        glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
+        glm::vec3 explosionVelocity;
+		        
         ofxPanel gui;
         ofxLabel altitudeLabel;
-    ofxLabel fuelLabel;
+        ofxLabel fuelLabel;
+        ofVec3f selectedPoint;
+        ofVec3f intersectPoint;
 //		ofxIntSlider numLevels;
 //		ofxToggle timingInfo;
     
         bool gameOver = false;
         bool showGameOverText = false;
-
+        bool bLanderSelected = false;
+        bool bInDrag = false;
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
 		bool bWireframe;
@@ -116,29 +106,17 @@ class ofApp : public ofBaseApp{
 		bool bDisplayLeafNodes = false;
 		bool bDisplayOctree = false;
 		bool bDisplayBBoxes = false;
-		
 		bool bLanderLoaded;
 		bool bTerrainSelected;
         bool bShowTelemetry = false;
-        bool bShipLightOn = false;
-	
-		ofVec3f selectedPoint;
-		ofVec3f intersectPoint;
-        ofLight shipLight;
+        bool explosionActive = false;
+        bool bResolveCollision = false;
+        bool landingStarted = false;
 
 		Emitter* shooter = NULL;
-
-		vector<Box> bboxList;
-
+		
 		const float selectionRange = 4.0;
-        
-		bool bResolveCollision = false;
-		glm::vec3 collisionDirection = glm::vec3(0, 0, 0);
 		float collisionSpeed = 0.1;
-    
-        glm::vec3 explosionVelocity;
-        bool explosionActive = false;
-
 		float shipVelocity = 0.0;
 		float shipAcceleration = 0.0;
 		float shipVelocityX = 0.0;
@@ -148,8 +126,7 @@ class ofApp : public ofBaseApp{
         float fuel = 120.0f;
         float fuelTimer = 0.0f;
     
-		bool landingStarted = false;
-    
+        vector<Box> bboxList;
         vector<ofPoint> stars;
 
 		map<int, bool> keymap;
