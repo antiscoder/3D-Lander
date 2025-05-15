@@ -142,9 +142,18 @@ void ofApp::update() {
 				shipVelocityZ += shipAccelerationZ;
 			}
 			shipVelocity += shipAcceleration;
-			glm::vec3 P = lander.getPosition();
-			lander.setPosition(P.x + shipVelocityX, P.y + shipVelocity, P.z + shipVelocityZ);
-			shooter->pos = lander.getPosition();
+			
+            // Turbulence
+            glm::vec3 P = lander.getPosition();
+            float turbulenceX = ofRandom(-0.05f, 0.05f);
+            float turbulenceZ = ofRandom(-0.05f, 0.05f);
+            lander.setPosition(
+                P.x + shipVelocityX + turbulenceX,
+                P.y + shipVelocity,
+                P.z + shipVelocityZ + turbulenceZ
+            );
+
+            shooter->pos = lander.getPosition();
 		}
 		else {
 			cout << shipVelocity << endl;
@@ -231,8 +240,9 @@ void ofApp::update() {
             cam.lookAt(L + forward);
             break;
     }
-        
+    lander.setRotation(0, landerRotation, 0, 1, 0);
 }
+
 //--------------------------------------------------------------
 void ofApp::draw() {
 
@@ -460,11 +470,11 @@ void ofApp::keyPressed(int key) {
 		break;
 	}
 
-	if (key == 'i') {
-        if (colBoxList.size() >= 10) {
-			bResolveCollision = true;
-			collisionDirection = glm::vec3(0, 1, 0);
-		}
+    if (key == 'a') {
+        landerRotation -= rotationSpeed;
+    }
+    if (key == 'd') {
+        landerRotation += rotationSpeed;
     }
     
     if (gameOver && key == 'r') {

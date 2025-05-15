@@ -125,6 +125,8 @@ class ofApp : public ofBaseApp{
 		float shipAccelerationZ = 0.0;
         float fuel = 120.0f;
         float fuelTimer = 0.0f;
+        float landerRotation = 0.0f;
+        float rotationSpeed = 1.0f;
     
         vector<Box> bboxList;
         vector<ofPoint> stars;
