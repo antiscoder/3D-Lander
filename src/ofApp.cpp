@@ -80,6 +80,13 @@ void ofApp::setup(){
 	shipAccelerationZ = (1 / std::pow(ofGetFrameRate(), 2));
     bLanderLoaded = true;
     
+    //mountains
+    landingZones.push_back(glm::vec3(50, 0.2, -179));
+    //behind mountains
+    landingZones.push_back(glm::vec3(-180, 0.2, 154));
+    //middle
+    landingZones.push_back(glm::vec3(0, 0.2, 20));
+    
 	shooter = new AgentEmitter();
 	shooter->emitterVelocity = shipVelocity;
 	shooter->emitterAcceleration = shipAcceleration;
@@ -142,9 +149,18 @@ void ofApp::update() {
 				shipVelocityZ += shipAccelerationZ;
 			}
 			shipVelocity += shipAcceleration;
-			glm::vec3 P = lander.getPosition();
-			lander.setPosition(P.x + shipVelocityX, P.y + shipVelocity, P.z + shipVelocityZ);
-			shooter->pos = lander.getPosition();
+			
+            // Turbulence
+            glm::vec3 P = lander.getPosition();
+            float turbulenceX = ofRandom(-0.05f, 0.05f);
+            float turbulenceZ = ofRandom(-0.05f, 0.05f);
+            lander.setPosition(
+                P.x + shipVelocityX + turbulenceX,
+                P.y + shipVelocity,
+                P.z + shipVelocityZ + turbulenceZ
+            );
+
+            shooter->pos = lander.getPosition();
 		}
 		else {
 			cout << shipVelocity << endl;
@@ -182,9 +198,20 @@ void ofApp::update() {
             bResolveCollision = false;
         }
     }
+    
     else if (!bResolveCollision && collisions.size() >= 10) {
         float impactForce = std::abs(shipVelocity);
-
+        
+        if (impactForce <= 0.015f) {
+            glm::vec3 landerPos = lander.getPosition();
+            for (auto& zone : landingZones) {
+                if (glm::distance(landerPos, zone) < landingZoneSize) {
+                    gameWin = true;
+                    landingStarted = false;
+                    return;
+                }
+            }
+        }
         // Apply a damped upward bounce impulse
         glm::vec3 bounce = glm::vec3(0, impactForce * 1.2f, 0);
         collisionDirection = bounce;
@@ -231,8 +258,9 @@ void ofApp::update() {
             cam.lookAt(L + forward);
             break;
     }
-        
+    lander.setRotation(0, landerRotation, 0, 1, 0);
 }
+
 //--------------------------------------------------------------
 void ofApp::draw() {
 
@@ -249,6 +277,12 @@ void ofApp::draw() {
 
 	cam.begin();
 	ofPushMatrix();
+    
+    for (auto &zone : landingZones) {
+        ofSetColor(ofColor::green);
+        ofDrawBox(zone, landingZoneSize, 0.2, landingZoneSize);
+    }
+    
 	if (bWireframe) {                    // wireframe mode  (include axis)
 		ofDisableLighting();
 		ofSetColor(ofColor::slateGray);
@@ -346,6 +380,11 @@ void ofApp::draw() {
     if (showGameOverText) {
         ofSetColor(ofColor::red);
         ofDrawBitmapString("YOU LOSE!\nPress R to Restart", ofGetWidth()/2 - 60, ofGetHeight()/2);
+    }
+    
+    if (gameWin) {
+        ofSetColor(ofColor::green);
+        ofDrawBitmapString("YOU WIN!\nPress R to Restart", ofGetWidth()/2 - 60, ofGetHeight()/2);
     }
 }
 
@@ -460,14 +499,14 @@ void ofApp::keyPressed(int key) {
 		break;
 	}
 
-	if (key == 'i') {
-        if (colBoxList.size() >= 10) {
-			bResolveCollision = true;
-			collisionDirection = glm::vec3(0, 1, 0);
-		}
+    if (key == 'a') {
+        landerRotation -= rotationSpeed;
+    }
+    if (key == 'd') {
+        landerRotation += rotationSpeed;
     }
     
-    if (gameOver && key == 'r') {
+    if ((gameOver || gameWin) && key == 'r') {
         restartGame();
     }
 
@@ -819,6 +858,7 @@ void ofApp::drawStarfield() {
 
 void ofApp::restartGame() {
     gameOver = false;
+    gameWin = false;
     showGameOverText = false;
     explosionActive = false;
     shipVelocity = 0;
