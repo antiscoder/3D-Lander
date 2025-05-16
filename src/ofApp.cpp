@@ -66,7 +66,6 @@ void ofApp::setup(){
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
     gui.add(fuelLabel.setup("Fuel (s)", ofToString((int)fuel)));
     
-//	gui.add(numLevels.setup("Number of Octree Levels", 1, 1, 10));
 	bHide = false;
 
 	mars.loadModel("geo/moon-houdini.obj");
@@ -77,7 +76,7 @@ void ofApp::setup(){
         stars.emplace_back(ofRandomWidth(), ofRandomHeight());
       }
     
-    lander.loadModel("geo/lander.obj");
+    lander.loadModel("geo/rocket.obj");
     lander.setScaleNormalization(false);
     lander.setPosition(0,50, 0);
 	shipVelocity = 0;
@@ -190,7 +189,7 @@ void ofApp::update() {
 		}
 		else {
 			cout << shipVelocity << endl;
-			if (std::abs(shipVelocity) > 0.015) {
+			if (std::abs(shipVelocity) > 0.050) {
 				explode(lander.getPosition(), shooter);
 				crashS.play();
                 explosionVelocity = glm::vec3(
@@ -281,12 +280,20 @@ void ofApp::update() {
             break;
         case COCKPIT_CAM:
 			{
-				cam.disableMouseInput();
-				bDisplayOctree = false;
-				glm::vec3 forward = glm::normalize((lander.getModelMatrix() * glm::vec4(0,0,1,0)));
-				cam.setPosition(L);
-				cam.lookAt(L - forward);
-			}
+                cam.disableMouseInput();
+                bDisplayOctree = false;
+
+                ofVec3f min = lander.getSceneMin();
+                glm::vec3 rocketBottom = lander.getPosition() + glm::vec3(0, min.y, 0);
+
+                glm::vec3 forward = glm::normalize(glm::vec3(lander.getModelMatrix() * glm::vec4(0, 0, 1, 0)));
+                glm::vec3 slightDown = glm::vec3(0, -0.3f, 0);
+                glm::vec3 lookDir = glm::normalize(forward + slightDown);
+
+                glm::vec3 cockpitPos = rocketBottom - glm::vec3(0, 0.1f, 0);
+                cam.setPosition(cockpitPos);
+                cam.lookAt(cockpitPos + lookDir);
+            }
             break;
 		case TOP_CAM:
 			{

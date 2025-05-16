@@ -89,8 +89,6 @@ class ofApp : public ofBaseApp{
         ofxLabel fuelLabel;
         ofVec3f selectedPoint;
         ofVec3f intersectPoint;
-//		ofxIntSlider numLevels;
-//		ofxToggle timingInfo;
     
         bool gameOver = false;
         bool showGameOverText = false;
@@ -133,7 +131,6 @@ class ofApp : public ofBaseApp{
         vector<Box> bboxList;
         vector<ofPoint> stars;
         vector<glm::vec3> landingZones;
-
 
 		map<int, bool> keymap;
 
