@@ -304,6 +304,14 @@ void ofApp::update() {
 			break;
     }
     lander.setRotation(0, landerRotation, 0, 1, 0);
+    
+    if(bShipLightOn) {
+        glm::vec3 shipPos = lander.getPosition();
+        shipLight.setPosition(shipPos.x, shipPos.y - 2, shipPos.z);
+        shipLight.enable();
+    } else {
+        shipLight.disable();
+    }
 }
 
 //--------------------------------------------------------------
@@ -501,6 +509,7 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'L':
 	case 'l':
+        bShipLightOn = !bShipLightOn;
         //		bDisplayLeafNodes = !bDisplayLeafNodes;
 		break;
 	case 'O':
@@ -768,7 +777,37 @@ void ofApp::initLightingAndMaterials() {
 	glEnable(GL_LIGHT0);
 //	glEnable(GL_LIGHT1);
 	glShadeModel(GL_SMOOTH);
-} 
+    
+    ofEnableLighting();
+
+    // Key Light - white light from above
+    keyLight.setup();
+    keyLight.enable();
+    keyLight.setPosition(100, 200, 100);
+    keyLight.setDiffuseColor(ofFloatColor(1.0, 1.0, 1.0));
+    keyLight.setSpecularColor(ofFloatColor(1.0, 1.0, 1.0));
+    keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+
+    // Fill Light - softer light from side
+    fillLight.setup();
+    fillLight.enable();
+    fillLight.setPosition(-200, 100, 0);
+    fillLight.setDiffuseColor(ofFloatColor(0.3, 0.3, 0.4));
+    fillLight.setAmbientColor(ofFloatColor(0.05, 0.05, 0.05));
+
+    // Back Light - white backlight
+    backLight.setup();
+    backLight.enable();
+    backLight.setPosition(0, 100, -200);
+    backLight.setDiffuseColor(ofFloatColor(0.2, 0.2, 0.3));
+    backLight.setAmbientColor(ofFloatColor(0.05, 0.05, 0.05));
+
+    // Ship Light (off by default)
+    shipLight.setup();
+    shipLight.setPointLight();
+    shipLight.setDiffuseColor(ofFloatColor(1.0, 1.0, 0.9));
+    shipLight.setSpecularColor(ofFloatColor(1.0, 1.0, 1.0));
+}
 
 void ofApp::savePicture() {
 	ofImage picture;

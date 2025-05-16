@@ -68,7 +68,7 @@ class ofApp : public ofBaseApp{
 		glm::vec3 getMousePointOnPlane(glm::vec3 p , glm::vec3 n);
         void drawStarfield();
         void restartGame();
-    
+        
         enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM, TOP_CAM };
         CamMode currentCam = FREE_CAM;
         CamMode lastFixedCam = TRACK_CAM;
@@ -89,6 +89,10 @@ class ofApp : public ofBaseApp{
         ofxLabel fuelLabel;
         ofVec3f selectedPoint;
         ofVec3f intersectPoint;
+        ofLight keyLight;
+        ofLight fillLight;
+        ofLight backLight;
+        ofLight shipLight;
     
         bool gameOver = false;
         bool showGameOverText = false;
@@ -111,6 +115,7 @@ class ofApp : public ofBaseApp{
         bool bResolveCollision = false;
         bool landingStarted = false;
         bool gameWin = false;
+        bool bShipLightOn = false;
 
 		Emitter* shooter = NULL;
 		
