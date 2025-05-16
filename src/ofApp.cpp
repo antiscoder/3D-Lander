@@ -65,7 +65,6 @@ void ofApp::setup(){
     // Right now no toggle, have to add later
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
     gui.add(fuelLabel.setup("Fuel (s)", ofToString((int)fuel)));
-    
 	bHide = false;
 
 	mars.loadModel("geo/moon-houdini.obj");
@@ -189,7 +188,7 @@ void ofApp::update() {
 		}
 		else {
 			cout << shipVelocity << endl;
-			if (std::abs(shipVelocity) > 0.050) {
+			if (std::abs(shipVelocity) > 0.08) {
 				explode(lander.getPosition(), shooter);
 				crashS.play();
                 explosionVelocity = glm::vec3(
@@ -298,7 +297,7 @@ void ofApp::update() {
 		case TOP_CAM:
 			{
 				cam.disableMouseInput();
-				cam.setPosition(L + glm::vec3(0, 10, 0));
+				cam.setPosition(L + glm::vec3(0, 25, 0));
 				cam.lookAt(L);
 			}
 			break;
