@@ -420,12 +420,12 @@ void ofApp::draw() {
 
 	// if point selected, draw a sphere
 	//
-	if (pointSelected) {
-		ofVec3f p = octree.mesh.getVertex(selectedNode.points[0]);
-		ofVec3f d = p - cam.getPosition();
-		ofSetColor(ofColor::lightGreen);
-		ofDrawSphere(p, .02 * d.length());
-	}
+//	if (pointSelected) {
+//		ofVec3f p = octree.mesh.getVertex(selectedNode.points[0]);
+//		ofVec3f d = p - cam.getPosition();
+//		ofSetColor(ofColor::lightGreen);
+//		ofDrawSphere(p, .02 * d.length());
+//	}
     
 	ofPopMatrix();
 	cam.end();
