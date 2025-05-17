@@ -54,7 +54,7 @@ void ofApp::setup(){
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
     gui.add(fuelLabel.setup("Fuel (s)", ofToString((int)fuel)));
 
-	mars.loadModel("geo/moon-houdini.obj");
+	mars.loadModel("geo/terrain.obj");
 	mars.setScaleNormalization(false);
     
     stars.reserve(200);
