@@ -33,12 +33,8 @@ static void thrust(glm::vec3 pos, Emitter* em) {
 //
 void ofApp::setup(){
 	bWireframe = false;
-	bDisplayPoints = false;
-	bAltKeyDown = false;
-	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
-	bDisplayOctree = true;
 	cam.setDistance(60);
 	cam.setNearClip(.1);
 	cam.setFov(90);
@@ -46,7 +42,6 @@ void ofApp::setup(){
     cam.enableMouseInput();
 	ofEnableSmoothing();
 	ofEnableDepthTest();
-
 	ofSetFrameRate(60);
 
 	bumpS.load("sounds/bump.wav");
@@ -54,18 +49,11 @@ void ofApp::setup(){
 	shootS.load("sounds/shoot.wav");
 	thrustS.load("sounds/thrust.wav");
 
-	// setup rudimentary lighting 
-	//
-	initLightingAndMaterials();
+    initLightingAndMaterials();
 
-	// create sliders for testing
-	//
 	gui.setup();
-    
-    // Right now no toggle, have to add later
     gui.add(altitudeLabel.setup("Altitude AGL", "0.00"));
     gui.add(fuelLabel.setup("Fuel (s)", ofToString((int)fuel)));
-	bHide = false;
 
 	mars.loadModel("geo/moon-houdini.obj");
 	mars.setScaleNormalization(false);
@@ -105,32 +93,30 @@ void ofApp::setup(){
 	//  Create Octree for testing.
 	//
 	octree.create(mars.getMesh(0), 20);
-	
-//	cout << "Number of Verts: " << mars.getMesh(0).getNumVertices() << endl;
 }
  
 //--------------------------------------------------------------
 // incrementally update scene (animation)
 //
 void ofApp::update() {
-    float dt = ofGetLastFrameTime();
-    
-    ofVec3f min = lander.getSceneMin() + lander.getPosition();
-    ofVec3f max = lander.getSceneMax() + lander.getPosition();
-
+    glm::vec3 landerPos = lander.getPosition();
+    ofVec3f min = lander.getSceneMin() + landerPos;
+    ofVec3f max = lander.getSceneMax() + landerPos;
 	Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
-
 	vector<Box> collisions;
 	octree.intersect(bounds, octree.root, collisions);
+    
 	shooter->update();
+    
 	if (landingStarted) {
 		if (collisions.size() < 10) {
-			lander.setPosition(lander.getPosition().x, lander.getPosition().y + shipVelocity, lander.getPosition().z);
+			
+            bool anyKeyPressed = false;
             
             // (1) Thrust upward with spacebar and fuel system
 			if (keymap[32] && fuel > 0.0f) {
 				shipVelocity += (10.0 / std::pow(ofGetFrameRate(), 2));
-				thrust(lander.getPosition(), shooter);
+				thrust(landerPos, shooter);
 				thrustS.setLoop(true);
 				if (!thrustS.isPlaying())
 					thrustS.play();
@@ -141,55 +127,53 @@ void ofApp::update() {
 					fuel = std::max(0.0f, fuel - 1.0f);
 					fuelLabel = ofToString((int)fuel);
 				}
+                bool anyKeyPressed = true;
 			}
             
             // (1) Ship maneuvering
 			if (keymap[OF_KEY_LEFT]) {
 				shipVelocityX -= shipAccelerationX;
-				thrustS.setLoop(true);
-				if (!thrustS.isPlaying())
-					thrustS.play();
+                bool anyKeyPressed = true;
 			}
 			if (keymap[OF_KEY_RIGHT]) {
 				shipVelocityX += shipAccelerationX;
-				thrustS.setLoop(true);
-				if (!thrustS.isPlaying())
-					thrustS.play();
-			}
+                bool anyKeyPressed = true;
+            }
 			if (keymap[OF_KEY_UP]) {
 				shipVelocityZ -= shipAccelerationZ;
-				thrustS.setLoop(true);
-				if (!thrustS.isPlaying())
-					thrustS.play();
-			}
+                bool anyKeyPressed = true;
+            }
 			if (keymap[OF_KEY_DOWN]) {
 				shipVelocityZ += shipAccelerationZ;
-				thrustS.setLoop(true);
-				if (!thrustS.isPlaying())
-					thrustS.play();
-			}
-			if (!keymap[OF_KEY_DOWN] && !keymap[OF_KEY_UP] && !keymap[OF_KEY_LEFT] && !keymap[OF_KEY_RIGHT] && !keymap[32]) {
-				thrustS.setLoop(false);
-			}
-			shipVelocity += shipAcceleration;
-				
+                bool anyKeyPressed = true;
+            }
 			
-            // Turbulence
-            glm::vec3 P = lander.getPosition();
+            if (anyKeyPressed) {
+                thrustS.setLoop(true);
+                if (!thrustS.isPlaying()) {
+                    thrustS.play();
+                }
+            }
+            else {
+                thrustS.setLoop(false);
+            }
+            
+			shipVelocity += shipAcceleration;
+			
+            // Physics + Turbulence
             float turbulenceX = ofRandom(-0.05f, 0.05f);
             float turbulenceZ = ofRandom(-0.05f, 0.05f);
             lander.setPosition(
-                P.x + shipVelocityX + turbulenceX,
-                P.y + shipVelocity,
-                P.z + shipVelocityZ + turbulenceZ
+                landerPos.x + shipVelocityX + turbulenceX,
+                landerPos.y + shipVelocity,
+                landerPos.z + shipVelocityZ + turbulenceZ
             );
 
-            shooter->pos = lander.getPosition();
+            shooter->pos = landerPos;
 		}
 		else {
-			cout << shipVelocity << endl;
-			if (std::abs(shipVelocity) > 0.08) {
-				explode(lander.getPosition(), shooter);
+            if (std::abs(shipVelocity) > 0.08) {
+				explode(landerPos, shooter);
 				crashS.play();
                 explosionVelocity = glm::vec3(
                         ofRandom(-150, 150),
@@ -205,30 +189,27 @@ void ofApp::update() {
 	}
     
     if (explosionActive) {
-        glm::vec3 pos = lander.getPosition();
         explosionVelocity += glm::vec3(0, -0.2, 0);
-        pos += explosionVelocity * ofGetLastFrameTime();
-        lander.setPosition(pos.x, pos.y, pos.z);
+        landerPos += explosionVelocity * ofGetLastFrameTime();
+        lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
         lander.setRotation(0, ofRandom(-5, 5), 0, 1, 0);
     }
 
-    
+    // Soft collision
     if (bResolveCollision) {
-        glm::vec3 pos = lander.getPosition();
-        pos += collisionDirection * collisionSpeed;
-        lander.setPosition(pos.x, pos.y, pos.z);
+        landerPos += collisionDirection * collisionSpeed;
+        lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
        
         
         if (collisions.size() < 10) {
             bResolveCollision = false;
         }
     }
-    
+    // Safe Landing
     else if (!bResolveCollision && collisions.size() >= 10) {
         float impactForce = std::abs(shipVelocity);
         
         if (impactForce <= 0.015f) {
-            glm::vec3 landerPos = lander.getPosition();
             for (auto& zone : landingZones) {
                 if (glm::distance(landerPos, zone) < landingZoneSize) {
                     gameWin = true;
@@ -237,14 +218,9 @@ void ofApp::update() {
                 }
             }
         }
-        // Apply a damped upward bounce impulse
-        glm::vec3 bounce = glm::vec3(0, impactForce * 1.2f, 0);
-        collisionDirection = bounce;
+        collisionDirection = glm::vec3(0, impactForce * 1.2f, 0);
 		bumpS.play();
         bResolveCollision = true;
-        cout << "Soft collision: impulse applied\n";
-
-        // Reset velocities for stability
         shipVelocity = 0;
         shipVelocityX = 0;
         shipVelocityZ = 0;
@@ -252,13 +228,12 @@ void ofApp::update() {
     
     // (2) AGL telemetry sensor and toggling
     if (bShowTelemetry) {
-        glm::vec3 origin = lander.getPosition();
-        Ray downRay(Vector3(origin.x, origin.y, origin.z), Vector3(0, -1, 0));
+        Ray downRay(Vector3(landerPos.x, landerPos.y, landerPos.z), Vector3(0, -1, 0));
         TreeNode hitNode;
         float altitude = 0;
         if (octree.intersect(downRay, octree.root, hitNode)) {
             auto v = octree.mesh.getVertex(hitNode.points[0]);
-            altitude = origin.y - v.y;
+            altitude = landerPos.y - v.y;
         }
         altitudeLabel = ofToString(altitude, 2);
     } else {
@@ -266,24 +241,23 @@ void ofApp::update() {
     }
         
     // Different camera angles
-    glm::vec3 L = lander.getPosition();
-	switch (currentCam) {
+    switch (currentCam) {
 		case FREE_CAM:
             break;
         case TRACK_CAM:
 			{
 				cam.disableMouseInput();
-				cam.setPosition(L + glm::vec3(0,5,10));
-				cam.lookAt(L);
+				cam.setPosition(landerPos + glm::vec3(0,5,10));
+				cam.lookAt(landerPos);
 			}
             break;
-        case COCKPIT_CAM:
+        case BOTTOM_CAM:
 			{
                 cam.disableMouseInput();
                 bDisplayOctree = false;
 
                 ofVec3f min = lander.getSceneMin();
-                glm::vec3 rocketBottom = lander.getPosition() + glm::vec3(0, min.y, 0);
+                glm::vec3 rocketBottom = landerPos + glm::vec3(0, min.y, 0);
 
                 glm::vec3 forward = glm::normalize(glm::vec3(lander.getModelMatrix() * glm::vec4(0, 0, 1, 0)));
                 glm::vec3 slightDown = glm::vec3(0, -0.3f, 0);
@@ -297,16 +271,15 @@ void ofApp::update() {
 		case TOP_CAM:
 			{
 				cam.disableMouseInput();
-				cam.setPosition(L + glm::vec3(0, 25, 0));
-				cam.lookAt(L);
+				cam.setPosition(landerPos + glm::vec3(0, 25, 0));
+				cam.lookAt(landerPos);
 			}
 			break;
     }
     lander.setRotation(0, landerRotation, 0, 1, 0);
     
     if(bShipLightOn) {
-        glm::vec3 shipPos = lander.getPosition();
-        shipLight.setPosition(shipPos.x, shipPos.y - 2, shipPos.z);
+        shipLight.setPosition(landerPos.x, landerPos.y - 2, landerPos.z);
         shipLight.enable();
     } else {
         shipLight.disable();
@@ -315,13 +288,12 @@ void ofApp::update() {
 
 //--------------------------------------------------------------
 void ofApp::draw() {
-
 	ofBackground(ofColor::black);
     
     ofDisableDepthTest();
     glDepthMask(false);
-    if (!bHide) gui.draw();
     drawStarfield();
+    gui.draw();
     glDepthMask(true);
     ofEnableDepthTest();
     
@@ -365,67 +337,14 @@ void ofApp::draw() {
 			}
 			shooter->draw();
 
-			if (bLanderSelected) {
-
-				ofVec3f min = lander.getSceneMin() + lander.getPosition();
-				ofVec3f max = lander.getSceneMax() + lander.getPosition();
-
-				Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
-				ofSetColor(ofColor::white);
-				Octree::drawBox(bounds);
-
-				// draw colliding boxes
-				//
-				ofSetColor(ofColor::lightBlue);
-				for (int i = 0; i < colBoxList.size(); i++) {
-					Octree::drawBox(colBoxList[i]);
-				}
-			}
-		}
+        }
 	}
 	if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-
-
-
-	if (bDisplayPoints) {                // display points as an option    
-		glPointSize(3);
-		ofSetColor(ofColor::green);
-		mars.drawVertices();
-	}
-
-	// highlight selected point (draw sphere around selected point)
-	//
-	if (bPointSelected) {
-		ofSetColor(ofColor::blue);
-		ofDrawSphere(selectedPoint, .1);
-	}
-
 
 	// recursively draw octree
 	//
 	ofDisableLighting();
-	//int level = 0;
-	//	ofNoFill();
-
-	if (bDisplayLeafNodes) {
-		octree.drawLeafNodes(octree.root);
-		//cout << "num leaf: " << octree.numLeaf << endl;
-    }
-	else if (bDisplayOctree) {
-		ofNoFill();
-		ofSetColor(ofColor::white);
-//		octree.draw(numLevels, 0);
-	}
-
-	// if point selected, draw a sphere
-	//
-//	if (pointSelected) {
-//		ofVec3f p = octree.mesh.getVertex(selectedNode.points[0]);
-//		ofVec3f d = p - cam.getPosition();
-//		ofSetColor(ofColor::lightGreen);
-//		ofDrawSphere(p, .02 * d.length());
-//	}
-    
+	
 	ofPopMatrix();
 	cam.end();
     
@@ -439,7 +358,6 @@ void ofApp::draw() {
         ofDrawBitmapString("YOU WIN!\nPress R to Restart", ofGetWidth()/2 - 60, ofGetHeight()/2);
     }
 }
-
 
 // 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
@@ -469,12 +387,13 @@ void ofApp::drawAxis(ofVec3f location) {
 
 
 void ofApp::keyPressed(int key) {
-
 	switch (key) {
-	case 'B':
-	case 'b':
-		bDisplayBBoxes = !bDisplayBBoxes;
-		break;
+    case 'a':
+        landerRotation -= rotationSpeed;
+        break;
+    case 'd':
+        landerRotation += rotationSpeed;
+        break;
     case 'C':
         if(currentCam == FREE_CAM) {
             currentCam  = lastFixedCam;
@@ -488,9 +407,9 @@ void ofApp::keyPressed(int key) {
         break;
 	case 'c':
         if(currentCam == TRACK_CAM) {
-            currentCam = COCKPIT_CAM;
+            currentCam = BOTTOM_CAM;
         }
-		else if (currentCam == COCKPIT_CAM) {
+		else if (currentCam == BOTTOM_CAM) {
 			currentCam = TOP_CAM;
 		}
         else {
@@ -499,21 +418,16 @@ void ofApp::keyPressed(int key) {
         lastFixedCam = currentCam;
         cam.disableMouseInput();
         break;
-	case 'F':
+    case 'r':
+        if (gameOver || gameWin) {
+            restartGame();
+        }
+        break;
 	case 'f':
 		ofToggleFullscreen();
 		break;
-	case 'H':
-	case 'h':
-		break;
-	case 'L':
 	case 'l':
         bShipLightOn = !bShipLightOn;
-        //		bDisplayLeafNodes = !bDisplayLeafNodes;
-		break;
-	case 'O':
-	case 'o':
-		bDisplayOctree = !bDisplayOctree;
 		break;
 	case 'R':
 		cam.reset();
@@ -524,14 +438,7 @@ void ofApp::keyPressed(int key) {
 	case 't':
 		setCameraTarget();
 		break;
-	case 'u':
-		break;
-	case 'v':
-		togglePointsDisplay();
-		break;
-	case 'V':
-		break;
-	case 'w':
+    case 'w':
 		toggleWireframeMode();
 		break;
     case 'g':
@@ -540,31 +447,9 @@ void ofApp::keyPressed(int key) {
 	case '1':
 		landingStarted=true;
 		break;
-	case OF_KEY_ALT:
-		cam.enableMouseInput();
-		bAltKeyDown = true;
-		break;
-	case OF_KEY_CONTROL:
-		bCtrlKeyDown = true;
-		break;
-	case OF_KEY_SHIFT:
-		break;
-	case OF_KEY_DEL:
-		break;
 	default:
 		break;
 	}
-
-    if (key == 'a') {
-        landerRotation -= rotationSpeed;
-    }
-    if (key == 'd') {
-        landerRotation += rotationSpeed;
-    }
-    
-    if ((gameOver || gameWin) && key == 'r') {
-        restartGame();
-    }
 
 	keymap[key] = true;
 }
@@ -577,38 +462,9 @@ void ofApp::toggleSelectTerrain() {
 	bTerrainSelected = !bTerrainSelected;
 }
 
-void ofApp::togglePointsDisplay() {
-	bDisplayPoints = !bDisplayPoints;
-}
-
 void ofApp::keyReleased(int key) {
-
-	switch (key) {
-	
-	case OF_KEY_ALT:
-		cam.disableMouseInput();
-		bAltKeyDown = false;
-		break;
-	case OF_KEY_CONTROL:
-		bCtrlKeyDown = false;
-		break;
-	case OF_KEY_SHIFT:
-		break;
-	default:
-		break;
-
-	}
 	keymap[key] = false;
 }
-
-
-
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
-
-	
-}
-
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button) {
@@ -663,9 +519,6 @@ bool ofApp::raySelectWithOctree(ofVec3f &pointRet) {
 	return pointSelected;
 }
 
-
-
-
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button) {
 
@@ -684,8 +537,8 @@ void ofApp::mouseDragged(int x, int y, int button) {
 		lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
 		mouseLastPos = mousePos;
 
-		ofVec3f min = lander.getSceneMin() + lander.getPosition();
-		ofVec3f max = lander.getSceneMax() + lander.getPosition();
+		ofVec3f min = lander.getSceneMin() + landerPos;
+		ofVec3f max = lander.getSceneMax() + landerPos;
 
 		Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
 
@@ -708,37 +561,12 @@ void ofApp::mouseReleased(int x, int y, int button) {
     }
 }
 
-
-
 // Set the camera to use the selected point as it's new target
 //  
 void ofApp::setCameraTarget() {
     cam.reset();
     cam.setTarget(lander.getPosition());
 }
-
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-
 
 //--------------------------------------------------------------
 // setup basic ambient lighting in GL  (for now, enable just 1 light)
@@ -952,8 +780,8 @@ void ofApp::restartGame() {
     shipVelocityZ = 0;
     fuel = 120.0f;
     fuelTimer = 0.0f;
-    lander.setPosition(0, 50, 0); // or initial spawn point
+    lander.setPosition(0, 50, 0);
     lander.setScale(1, 1, 1);
-    shooter->sys->particles.clear(); // clear old particles
+    shooter->sys->particles.clear();
     landingStarted = false;
 }

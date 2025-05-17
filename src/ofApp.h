@@ -46,21 +46,15 @@ class ofApp : public ofBaseApp{
 
 		void keyPressed(int key);
 		void keyReleased(int key);
-		void mouseMoved(int x, int y );
 		void mouseDragged(int x, int y, int button);
 		void mousePressed(int x, int y, int button);
 		void mouseReleased(int x, int y, int button);
-		void mouseEntered(int x, int y);
-		void mouseExited(int x, int y);
-		void windowResized(int w, int h);
 		void dragEvent2(ofDragInfo dragInfo);
 		void dragEvent(ofDragInfo dragInfo);
-		void gotMessage(ofMessage msg);
 		void drawAxis(ofVec3f);
 		void initLightingAndMaterials();
 		void savePicture();
 		void toggleWireframeMode();
-		void togglePointsDisplay();
 		void toggleSelectTerrain();
 		void setCameraTarget();
 		bool mouseIntersectPlane(ofVec3f planePoint, ofVec3f planeNorm, ofVec3f &point);
@@ -69,7 +63,7 @@ class ofApp : public ofBaseApp{
         void drawStarfield();
         void restartGame();
         
-        enum CamMode { FREE_CAM, TRACK_CAM, COCKPIT_CAM, TOP_CAM };
+        enum CamMode { FREE_CAM, TRACK_CAM, BOTTOM_CAM, TOP_CAM };
         CamMode currentCam = FREE_CAM;
         CamMode lastFixedCam = TRACK_CAM;
 
@@ -98,12 +92,7 @@ class ofApp : public ofBaseApp{
         bool showGameOverText = false;
         bool bLanderSelected = false;
         bool bInDrag = false;
-		bool bAltKeyDown;
-		bool bCtrlKeyDown;
 		bool bWireframe;
-		bool bDisplayPoints;
-		bool bPointSelected;
-		bool bHide;
 		bool pointSelected = false;
 		bool bDisplayLeafNodes = false;
 		bool bDisplayOctree = false;
