@@ -14,7 +14,6 @@ static void explode(glm::vec3 pos, Emitter* em) {
 	}
 }
 
-// (3) Rocket exhaust uses particle emitter
 static void thrust(glm::vec3 pos, Emitter* em) {
 	for (int x = 0; x < 10; x++) {
 		Particle child;
@@ -113,7 +112,6 @@ void ofApp::update() {
 			
             bool anyKeyPressed = false;
             
-            // (1) Thrust upward with spacebar and fuel system
 			if (keymap[32] && fuel > 0.0f) {
 				shipVelocity += (10.0 / std::pow(ofGetFrameRate(), 2));
 				thrust(landerPos, shooter);
@@ -121,7 +119,6 @@ void ofApp::update() {
 				if (!thrustS.isPlaying())
 					thrustS.play();
 				fuelTimer += 1.0f / ofGetFrameRate();
-                // (1) Fuel decrementation
 				if (fuelTimer >= 1.0f) {
 					fuelTimer -= 1.0f;
 					fuel = std::max(0.0f, fuel - 1.0f);
@@ -130,7 +127,6 @@ void ofApp::update() {
                 bool anyKeyPressed = true;
 			}
             
-            // (1) Ship maneuvering
 			if (keymap[OF_KEY_LEFT]) {
 				shipVelocityX -= shipAccelerationX;
                 bool anyKeyPressed = true;
@@ -160,7 +156,6 @@ void ofApp::update() {
             
 			shipVelocity += shipAcceleration;
 			
-            // Physics + Turbulence
             float turbulenceX = ofRandom(-0.05f, 0.05f);
             float turbulenceZ = ofRandom(-0.05f, 0.05f);
             lander.setPosition(
@@ -195,7 +190,6 @@ void ofApp::update() {
         lander.setRotation(0, ofRandom(-5, 5), 0, 1, 0);
     }
 
-    // Soft collision
     if (bResolveCollision) {
         landerPos += collisionDirection * collisionSpeed;
         lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
@@ -205,7 +199,6 @@ void ofApp::update() {
             bResolveCollision = false;
         }
     }
-    // Safe Landing
     else if (!bResolveCollision && collisions.size() >= 10) {
         float impactForce = std::abs(shipVelocity);
         
@@ -226,7 +219,6 @@ void ofApp::update() {
         shipVelocityZ = 0;
     }
     
-    // (2) AGL telemetry sensor and toggling
     if (bShowTelemetry) {
         Ray downRay(Vector3(landerPos.x, landerPos.y, landerPos.z), Vector3(0, -1, 0));
         TreeNode hitNode;
@@ -240,7 +232,6 @@ void ofApp::update() {
         altitudeLabel = "OFF";
     }
         
-    // Different camera angles
     switch (currentCam) {
         case FREE_CAM:
             break;
