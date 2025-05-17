@@ -242,39 +242,34 @@ void ofApp::update() {
         
     // Different camera angles
     switch (currentCam) {
-		case FREE_CAM:
+        case FREE_CAM:
             break;
+
         case TRACK_CAM:
-			{
-				cam.disableMouseInput();
-				cam.setPosition(landerPos + glm::vec3(0,5,10));
-				cam.lookAt(landerPos);
-			}
+            cam.disableMouseInput();
+            cam.setPosition(landerPos + glm::vec3(0, 5, 10));
+            cam.lookAt(landerPos);
             break;
-        case BOTTOM_CAM:
-			{
-                cam.disableMouseInput();
-                bDisplayOctree = false;
 
-                ofVec3f min = lander.getSceneMin();
-                glm::vec3 rocketBottom = landerPos + glm::vec3(0, min.y, 0);
+        case BOTTOM_CAM: {
+            cam.disableMouseInput();
+            bDisplayOctree = false;
 
-                glm::vec3 forward = glm::normalize(glm::vec3(lander.getModelMatrix() * glm::vec4(0, 0, 1, 0)));
-                glm::vec3 slightDown = glm::vec3(0, -0.3f, 0);
-                glm::vec3 lookDir = glm::normalize(forward + slightDown);
+            glm::vec3 min = glm::vec3(lander.getSceneMin());
+            glm::vec3 rocketBottom = landerPos + glm::vec3(0, min.y, 0);
+            glm::vec3 cameraPos = rocketBottom + glm::vec3(0, 0.5f, 0);
+            glm::vec3 lookAtPos = rocketBottom + glm::vec3(0, -10.0f, 0);
 
-                glm::vec3 cockpitPos = rocketBottom - glm::vec3(0, 0.1f, 0);
-                cam.setPosition(cockpitPos);
-                cam.lookAt(cockpitPos + lookDir);
-            }
+            cam.setPosition(cameraPos);
+            cam.lookAt(lookAtPos);
             break;
-		case TOP_CAM:
-			{
-				cam.disableMouseInput();
-				cam.setPosition(landerPos + glm::vec3(0, 25, 0));
-				cam.lookAt(landerPos);
-			}
-			break;
+        }
+
+        case TOP_CAM:
+            cam.disableMouseInput();
+            cam.setPosition(landerPos + glm::vec3(0, 25, 0));
+            cam.lookAt(landerPos);
+            break;
     }
     lander.setRotation(0, landerRotation, 0, 1, 0);
     
